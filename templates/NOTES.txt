@@ -1,0 +1,1 @@
+{{ .Release.Name }} chart is deployed.

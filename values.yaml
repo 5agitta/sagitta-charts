@@ -1,0 +1,27 @@
+replicaCount: 1
+
+kind: Deployment
+
+image:
+  repository: docker.io
+  prefix: 5agitta
+  pullPolicy: Always
+  tag: "0.0.1-SNAPSHOT"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1.5Gi"
+    cpu: "500m"
+
+secrets:
+  enabled: true
+
+ingress:
+  enabled: false

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Release.Name }}-configmap
+data:
+  {{- with .Values.config }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: {{ .Values.kind }}
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Release.Name }}-app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-app
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.targetPort }}"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-container
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-configmap
+            {{- if .Values.secrets.enabled }}
+            - secretRef:
+                name: {{ .Release.Name }}-secrets
+            {{- end }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.prefix }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 70
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 70
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
